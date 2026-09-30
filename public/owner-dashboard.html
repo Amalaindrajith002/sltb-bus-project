@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Owner Dashboard - SLTB System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-6 max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-2">බස් හිමියාගේ පාලක පුවරුව</h1>
+        <p class="text-center text-gray-600 mb-8">බස් රථ ලියාපදිංචිය සහ කාලසටහන් කළමනාකරණය</p>
+
+        <!-- 1. Register Bus Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">අලුත් බස් රථයක් එකතු කිරීම (Register Bus)</h2>
+            <form id="busForm" onsubmit="registerBus(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">බස් හිමියාගේ ID එක (Owner ID):</label>
+                    <input type="number" id="owner_id" value="1" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">බස් අංකය (Bus Number):</label>
+                    <input type="text" id="bus_number" placeholder="උදා: WP-NA-1234" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">බස් වර්ගය (Bus Type):</label>
+                    <select id="bus_type" class="w-full mt-1 p-2 border rounded-md">
+                        <option value="Normal">Normal</option>
+                        <option value="Semi-Luxury">Semi-Luxury</option>
+                        <option value="AC">AC</option>
+                        <option value="Super Luxury">Super Luxury</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">මුළු ආසන ගණන (Total Seats):</label>
+                    <input type="number" id="total_seats" value="40" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">බස් රථය ඇතුළත් කරන්න</button>
+            </form>
+        </div>
+
+        <!-- 2. Add Schedule Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">කාලසටහනක් සහ මාර්ගයක් එකතු කිරීම (Add Schedule)</h2>
+            <form id="scheduleForm" onsubmit="addSchedule(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">බස් ID එක (Bus ID):</label>
+                    <input type="number" id="sch_bus_id" value="1" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">මාර්ග අංකය (Route Number):</label>
+                    <input type="text" id="route_number" placeholder="උදා: 01" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">පිටත්වන ස්ථානය (Origin):</label>
+                        <input type="text" id="origin" placeholder="කොළඹ" required class="w-full mt-1 p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">ගමන් කරන ස්ථානය (Destination):</label>
+                        <input type="text" id="destination" placeholder="මහනුවර" required class="w-full mt-1 p-2 border rounded-md">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">පිටත්වන වේලාව (Departure):</label>
+                        <input type="time" id="departure_time" required class="w-full mt-1 p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">පැමිණෙන වේලාව (Arrival):</label>
+                        <input type="time" id="arrival_time" required class="w-full mt-1 p-2 border rounded-md">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">ටිකට් ගාස්තුව (Fare - LKR):</label>
+                    <input type="number" step="0.01" id="fare" placeholder="1200.00" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition">කාලසටහන ඇතුළත් කරන්න</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // බස් රථයක් රෙජිස්ටර් කිරීම
+        async function registerBus(event) {
+            event.preventDefault();
+            const owner_id = document.getElementById('owner_id').value;
+            const bus_number = document.getElementById('bus_number').value;
+            const bus_type = document.getElementById('bus_type').value;
+            const total_seats = document.getElementById('total_seats').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/buses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ owner_id, bus_number, bus_type, total_seats, is_sltb: false })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('සාර්ථකයි! ' + result.message);
+                    document.getElementById('busForm').reset();
+                } else {
+                    alert('දෝෂයකි: ' + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('සමාවන්න, සර්වර් දෝෂයක් ඇති විය.');
+            }
+        }
+
+        // ෂෙඩියුල් එකක් එකතු කිරීම
+        async function addSchedule(event) {
+            event.preventDefault();
+            const bus_id = document.getElementById('sch_bus_id').value;
+            const route_number = document.getElementById('route_number').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const departure_time = document.getElementById('departure_time').value;
+            const arrival_time = document.getElementById('arrival_time').value;
+            const fare = document.getElementById('fare').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/schedules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bus_id, route_number, origin, destination, departure_time, arrival_time, fare })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('සාර්ථකයි! ' + result.message);
+                    document.getElementById('scheduleForm').reset();
+                } else {
+                    alert('දෝෂයකි: ' + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('සමාවන්න, සර්වර් දෝෂයක් ඇති විය.');
+            }
+        }
+    </script>
+</body>
+</html>

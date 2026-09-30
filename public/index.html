@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLTB & Private Bus Booking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-6 max-w-xl">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-8">ශ්‍රී ලංකා බස් බුකින් පද්ධතිය</h1>
+
+        <!-- Bus Search Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">බස් රථ සෙවීම (Search Buses)</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">පිටත්වන ස්ථානය (From):</label>
+                    <input type="text" id="origin" value="කොළඹ" class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">ගමන් කරන ස්ථානය (To):</label>
+                    <input type="text" id="destination" value="මහනුවර" class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <button onclick="searchBuses()" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">බස් සේවාවන් සොයන්න</button>
+            </div>
+        </div>
+
+        <!-- Search Results Section -->
+        <div id="results" class="space-y-4"></div>
+    </div>
+<!-- Bus Search Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">බස් රථ සෙවීම (Search Buses)</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">පිටත්වන ස්ථානය (From):</label>
+                    <select id="origin" class="w-full mt-1 p-2 border rounded-md bg-white">
+                        <option value="">නගරයක් තෝරන්න...</option>
+                        <option value="කොළඹ">කොළඹ (Colombo)</option>
+                        <option value="මහනුවර">මහනුවර (Kandy)</option>
+                        <option value="ගාල්ල">ගාල්ල (Galle)</option>
+                        <option value="මාතර">මාතර (Matara)</option>
+                        <option value="අනුරාධපුරය">අනුරාධපුරය (Anuradhapura)</option>
+                        <option value="යාපනය">යාපනය (Jaffna)</option>
+                        <option value="කුරුණෑගල">කුරුණෑගල (Kurunegala)</option>
+                        <option value="මහනුවර">මහනුවර (Kandy)</option>
+                        <option value="රත්නපුර">රත්නපුර (Ratnapura)</option>
+                        <option value="මඩಕලපුව">මඩಕලපුව (Batticaloa)</option>
+                        <option value="ත්‍රිකුණාමලය">ත්‍රිකුණාමලය (Trincomalee)</option>
+                        <option value="බදුල්ල">බදුල්ල (Badulla)</option>
+                        <option value="මීගමුව">මීගමුව (Negombo)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">ගමන් කරන ස්ථානය (To):</label>
+                    <select id="destination" class="w-full mt-1 p-2 border rounded-md bg-white">
+                        <option value="">නගරයක් තෝරන්න...</option>
+                        <option value="කොළඹ">කොළඹ (Colombo)</option>
+                        <option value="මහනුවර">මහනුවර (Kandy)</option>
+                        <option value="ගාල්ල">ගාල්ල (Galle)</option>
+                        <option value="මාතර">මාතර (Matara)</option>
+                        <option value="අනුරාධපුරය">අනුරාධපුරය (Anuradhapura)</option>
+                        <option value="යාපනය">යාපනය (Jaffna)</option>
+                        <option value="කුරුණෑගල">කුරුණෑගල (Kurunegala)</option>
+                        <option value="රත්නපුර">රත්නපුර (Ratnapura)</option>
+                        <option value="මඩකලපුව">මඩកලපුව (Batticaloa)</option>
+                        <option value="ත්‍රිකුණාමලය">ත්‍රිකුණაමලය (Trincomalee)</option>
+                        <option value="බදුල්ල">බදුල්ල (Badulla)</option>
+                        <option value="මීගමුව">මීගමුව (Negombo)</option>
+                    </select>
+                </div>
+                <button onclick="searchBuses()" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">බස් සේවාවන් සොයන්න</button>
+            </div>
+        </div>
+    <script>
+        let selectedSeat = null;
+
+        async function searchBuses() {
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p class="text-center text-gray-500">සොයමින් පවතී...</p>';
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/schedules/search?origin=${origin}&destination=${destination}`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-center text-red-500">බස් රථ හමු නොවීය.</p>';
+                    return;
+                }
+
+                let html = '<h3 class="text-lg font-semibold text-gray-700">ප්‍රතිඵල:</h3>';
+                data.forEach(schedule => {
+                    html += `
+                        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 space-y-3">
+                            <div>
+                                <p class="font-bold text-lg">${schedule.bus_number} (${schedule.bus_type})</p>
+                                <p class="text-sm text-gray-600">මාර්ගය: <b>${schedule.route_number}</b> | ${schedule.origin} සිට ${schedule.destination} දක්වා</p>
+                                <p class="text-sm text-gray-600">වේලාව: ${schedule.departure_time}</p>
+                                <p class="text-blue-600 font-semibold mt-1">ගාස්තුව: රු. ${schedule.fare}</p>
+                            </div>
+                            
+                            <button onclick="openSeatLayout(${schedule.id})" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition text-sm">ආසන පෙන්වන්න / වෙන්කරගන්න (Select Seats)</button>
+                            
+                            <!-- Seat Layout Container -->
+                            <div id="seat_layout_${schedule.id}" class="hidden border-t pt-3 space-y-3"></div>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                resultsDiv.innerHTML = '<p class="text-center text-red-500">දත්ත ලබාගැනීමේ දෝෂයක් ඇති විය.</p>';
+            }
+        }
+
+        async function openSeatLayout(scheduleId) {
+            const layoutDiv = document.getElementById(`seat_layout_${scheduleId}`);
+            if (!layoutDiv.classList.contains('hidden')) {
+                layoutDiv.classList.add('hidden');
+                return;
+            }
+
+            layoutDiv.innerHTML = '<p class="text-center text-gray-500 text-sm">ආසන විස්තර පූරණය වෙමින් පවතී...</p>';
+            layoutDiv.classList.remove('hidden');
+
+            try {
+                // Fetch already booked seats
+                const res = await fetch(`http://localhost:5000/api/bookings/schedule/${scheduleId}`);
+                const bookedSeats = await res.json();
+
+                let seatHtml = `
+                    <p class="text-xs font-semibold text-gray-600 text-center">ආසන සැකැස්ම (අළු පාට = වෙන් කර ඇත, කොළ පාට = හිස් ආසන)</p>
+                    <div class="grid grid-cols-4 gap-2 max-w-xs mx-auto p-3 bg-gray-50 rounded border">
+                `;
+
+                // Let's assume a 20-seat or 40-seat layout (Rows A to J, 4 seats per row)
+                const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+                rows.forEach(row => {
+                    for (let i = 1; i <= 4; i++) {
+                        const seatNum = `${row}${i}`;
+                        const isBooked = bookedSeats.includes(seatNum);
+
+                        if (isBooked) {
+                            seatHtml += `<div class="bg-red-300 text-red-800 text-xs font-bold py-2 text-center rounded cursor-not-allowed">${seatNum}</div>`;
+                        } else {
+                            seatHtml += `<div id="seat_${scheduleId}_${seatNum}" onclick="selectSeat('${scheduleId}', '${seatNum}')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 text-center rounded cursor-now transition">${seatNum}</div>`;
+                        }
+                    }
+                });
+
+                seatHtml += `</div>
+                    <div class="text-center mt-3">
+                        <p id="selected_text_${scheduleId}" class="text-sm font-medium text-gray-700 mb-2">තෝරාගත් ආසනයක් නැත</p>
+                        <button onclick="bookSeat(${scheduleId})" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition text-sm font-bold">තහවුරු කර බුක් කරන්න</button>
+                    </div>
+                `;
+
+                layoutDiv.innerHTML = seatHtml;
+
+            } catch (err) {
+                console.error(err);
+                layoutDiv.innerHTML = '<p class="text-center text-red-500 text-sm">ආසන ಲೋඩ් කිරීමේ දෝෂයක් ඇති විය.</p>';
+            }
+        }
+
+        function selectSeat(scheduleId, seatNum) {
+            // Reset previous selected highlight if any
+            if (selectedSeat) {
+                const prevEl = document.getElementById(`seat_${scheduleId}_${selectedSeat}`);
+                if (prevEl) prevEl.classList.replace('bg-blue-600', 'bg-green-500');
+            }
+
+            selectedSeat = seatNum;
+            const currentEl = document.getElementById(`seat_${scheduleId}_${seatNum}`);
+            currentEl.classList.replace('bg-green-500', 'bg-blue-600');
+
+            document.getElementById(`selected_text_${scheduleId}`).innerText = `තෝරාගත් ආසනය: ${seatNum}`;
+        }
+
+        async function bookSeat(scheduleId) {
+            if (!selectedSeat) {
+                alert('කරුණාකර පළමුව ආසනයක් තෝරාගන්න!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: 1,
+                        schedule_id: scheduleId,
+                        seat_number: selectedSeat,
+                        payment_status: 'cash_on_bus'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('සාර්ථකයි! ' + result.message);
+                    selectedSeat = null;
+                    searchBuses(); // Refresh search view
+                } else {
+                    alert('දෝෂයකි: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('සමාවන්න, බුකින් කිරීමේදී දෝෂයක් ඇති විය.');
+            }
+        }
+    </script>
+</body>
+</html>

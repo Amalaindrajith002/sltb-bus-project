@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SLTB Bus System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans flex items-center justify-center min-h-screen py-6">
+
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">පද්ධතියේ ලියාපදිංචි වීම</h1>
+        
+        <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-600">ගිණුම් වර්ගය (Account Type):</label>
+                <select id="regType" onchange="toggleOwnerFields()" class="w-full mt-1 p-2 border rounded-md">
+                    <option value="passenger">මගියා (Passenger)</option>
+                    <option value="owner">බස් හිමියා (Bus Owner)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600">සම්පූර්ණ නම:</label>
+                <input type="text" id="name" required class="w-full mt-1 p-2 border rounded-md">
+            </div>
+            <div id="companyField" class="hidden">
+                <label class="block text-sm font-medium text-gray-600">ආයතනයේ නම (Company Name):</label>
+                <input type="text" id="company_name" class="w-full mt-1 p-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600">දුරකථන අංකය:</label>
+                <input type="text" id="phone" required class="w-full mt-1 p-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600">ඊමේල් ලිපිනය:</label>
+                <input type="email" id="email" required class="w-full mt-1 p-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600">මුරපදය (Password):</label>
+                <input type="password" id="password" required class="w-full mt-1 p-2 border rounded-md">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">ලියාපදිංචි වන්න</button>
+        </form>
+        <p class="text-center text-sm text-gray-600 mt-4">දැනටමත් ගිණුමක් තිබේද? <a href="login.html" class="text-blue-600 font-semibold">පිවිසෙන්න (Login)</a></p>
+    </div>
+
+    <script>
+        function toggleOwnerFields() {
+            const regType = document.getElementById('regType').value;
+            const companyField = document.getElementById('companyField');
+            if (regType === 'owner') {
+                companyField.classList.remove('hidden');
+            } else {
+                companyField.classList.add('hidden');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const regType = document.getElementById('regType').value;
+            const name = document.getElementById('name').value;
+            const company_name = document.getElementById('company_name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            let endpoint = 'http://localhost:5000/api/auth/register';
+            let payload = { name, email, phone, password, role: 'passenger' };
+
+            if (regType === 'owner') {
+                endpoint = 'http://localhost:5000/api/owner/register'; // බස් හිමියන් සඳහා
+                payload = { name, company_name, phone, email, password };
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('සාර්ථකයි! ලියාපදිංචි වීම සාර්ථක විය. දැන් ඔබට Login විය හැක.');
+                    window.location.href = '/login.html';
+                } else {
+                    alert('දෝෂයකි: ' + (result.message || result.error));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('සමාවන්න, ලියාපදිංචි වීමේදී දෝෂයක් ඇති විය.');
+            }
+        }
+    </script>
+</body>
+</html>

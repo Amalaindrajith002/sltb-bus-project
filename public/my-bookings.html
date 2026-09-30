@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - SLTB Bus Booking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-6 max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-2">මගේ බුකින්ස් (My Bookings)</h1>
+        <p class="text-center text-gray-600 mb-8">ඔබ විසින් වෙන්කරවාගත් බස් ආසන සහ ඩිජිටල් ටිකට්පත්</p>
+
+        <!-- Bookings List Container -->
+        <div id="bookings-container" class="space-y-4">
+            <p class="text-center text-gray-500">දත්ත ලෝඩ් වෙමින් පවතී...</p>
+        </div>
+    </div>
+
+    <script>
+        const userId = 1; // තාවකාලිකව user_id 1 පාවිච්චි කරමු
+
+        async function fetchMyBookings() {
+            const container = document.getElementById('bookings-container');
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/bookings/user/${userId}`);
+                const bookings = await response.json();
+
+                if (bookings.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">ඔබ විසින් තවම කිසිදු ආසනයක් වෙන් කරවාගෙන නැත.</p>';
+                    return;
+                }
+
+                let html = '';
+                bookings.forEach((b, index) => {
+                    html += `
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-600 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg text-gray-800">${b.bus_number} (${b.bus_type})</span>
+                                <span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-semibold">සීට් අංකය: ${b.seat_number}</span>
+                            </div>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p>මාර්ගය: <b>${b.route_number}</b> | ${b.origin} සිට ${b.destination} දක්වා</p>
+                                <p>පිටත්වන වේලාව: ${b.departure_time}</p>
+                                <p>බුකින් අංකය (Booking ID): <b>#${b.id || (index + 1)}</b></p>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t">
+                                <span class="text-blue-600 font-bold">ගාස්තුව: රු. ${b.fare}</span>
+                                <span class="text-xs text-gray-500">ගෙවීම: ${b.payment_status}</span>
+                            </div>
+                            
+                            <!-- QR Code Box -->
+                            <div class="flex flex-col items-center justify-center pt-4 border-t border-dashed">
+                                <p class="text-xs font-semibold text-gray-500 mb-2">ඔබගේ ටිකට් QR කෝඩ් එක (බස් එකට නගින විට පෙන්වන්න)</p>
+                                <div id="qrcode_${b.id || index}" class="p-2 bg-white border rounded shadow-sm"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                // Render QR Codes for each booking
+                bookings.forEach((b, index) => {
+                    const qrContainer = document.getElementById(`qrcode_${b.id || index}`);
+                    if (qrContainer) {
+                        new QRCode(qrContainer, {
+                            text: `SLTB-TICKET-ID:${b.id || (index + 1)}-BUS:${b.bus_number}-SEAT:${b.seat_number}`,
+                            width: 100,
+                            height: 100
+                        });
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-center text-red-500">දත්ත ලබාගැනීමේ දෝෂයක් ඇති විය.</p>';
+            }
+        }
+
+        window.onload = fetchMyBookings;
+    </script>
+</body>
+</html>

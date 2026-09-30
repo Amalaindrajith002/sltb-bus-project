@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLTB Admin Panel - Bus Owner Approvals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-6 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-red-600 mb-2">ප්‍රධාන පරිපාලක පුවරුව (Admin Panel)</h1>
+        <p class="text-center text-gray-600 mb-8">අනුමත වීමට ඇති පෞද්ගලික බස් හිමියන්ගේ ලැයිස්තුව</p>
+
+        <!-- Pending Owners Table Container -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">අනුමැතිය අපේක්ෂිත බස් හිමියන් (Pending Owners)</h2>
+            
+            <div id="owners-list" class="space-y-4">
+                <p class="text-gray-500">දත්ත ಲೋඩ් වෙමින් පවතී...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page එක Load වූ සැනින් Pending Owners ලැයිස්තුව ගෙන ඒම
+        async function fetchPendingOwners() {
+            const listDiv = document.getElementById('owners-list');
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/pending-owners');
+                const owners = await response.json();
+
+                if (owners.length === 0) {
+                    listDiv.innerHTML = '<p class="text-gray-500 text-center py-4">අනුමත වීමට බස් හිමියන් නොමැත.</p>';
+                    return;
+                }
+
+                let html = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-700 text-sm">
+                                    <th class="p-3 border">නම</th>
+                                    <th class="p-3 border">ආයතනය (Company)</th>
+                                    <th class="p-3 border">දුරකථන අංකය</th>
+                                    <th class="p-3 border">ඊමේල් ලිපිනය</th>
+                                    <th class="p-3 border text-center">ක්‍රියාමාර්ග (Actions)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                owners.forEach(owner => {
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 border font-medium">${owner.name}</td>
+                            <td class="p-3 border">${owner.company_name || '-'}</td>
+                            <td class="p-3 border">${owner.phone}</td>
+                            <td class="p-3 border">${owner.email}</td>
+                            <td class="p-3 border text-center space-x-2">
+                                <button onclick="updateStatus(${owner.id}, 'approved')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition">Approve</button>
+                                <button onclick="updateStatus(${owner.id}, 'rejected')" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition">Reject</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                listDiv.innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                listDiv.innerHTML = '<p class="text-red-500 text-center">දත්ත ලබාගැනීමේ දෝෂයක් ඇති විය.</p>';
+            }
+        }
+
+        // Owner කෙනෙක් Approve හෝ Reject කිරීම
+        async function updateStatus(ownerId, status) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/admin/approve-owner/${ownerId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    fetchPendingOwners(); // ලැයිස්තුව නැවත Refresh කිරීම
+                } else {
+                    alert('දෝෂයකි: ' + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('සමාවන්න, තත්ත්වය යාවත්කාලීන කිරීමේදී දෝෂයක් ඇති විය.');
+            }
+        }
+
+        // Page Load වීමේදී ෆන්ෂන් එක කෝල් කිරීම
+        window.onload = fetchPendingOwners;
+    </script>
+</body>
+</html>
