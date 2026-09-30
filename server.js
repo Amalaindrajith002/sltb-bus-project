@@ -43,6 +43,9 @@ app.get('/', (req, res) => {
 
 // Server එක Run කිරීම
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 // 1. Bus Owner Registration (බස් හිමියෙකු ලියාපදිංචි වීම)
 app.post('/api/owner/register', (req, res) => {
     const { name, company_name, phone, email, password } = req.body;
